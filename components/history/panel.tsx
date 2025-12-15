@@ -4,6 +4,7 @@ import { Select } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import { Loader } from 'lucide-react';
+import { getHistoryList } from '@/shared/axios/api-learn';
 
 // 定义演奏历史记录类型
 interface PerformHistoryItem {
@@ -31,14 +32,14 @@ export default function HistoryPanel() {
     []
   );
   useEffect(() => {
-    fetch(`http://${process.env.NEXT_PUBLIC_BASE_URL}/history`)
-      .then((res) => res.json())
+    getHistoryList()
       .then((data) => {
         setPerformHistory(data);
-        setIsLoading(false);
       })
       .catch((err) => {
-        console.error('Failed to fetch /history:', err);
+        console.error(err);
+      })
+      .finally(() => {
         setIsLoading(false);
       });
   }, []);
@@ -64,7 +65,9 @@ export default function HistoryPanel() {
                     <span>{new Date(item.startedAt).toLocaleString()}</span>
                   </div>
                   <div>
-                    <span className="mr-3">{item.status==='ended' ? '已完成' : '进行中'}</span>
+                    <span className="mr-3">
+                      {item.status === 'ended' ? '已完成' : '进行中'}
+                    </span>
                     <span>{item.success ? '成功' : '失败'}</span>
                   </div>
                 </div>

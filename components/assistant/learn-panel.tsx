@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation';
 import { emit } from '@/hooks/user-emitter';
 import { useAssistantStore } from '@/stores/assistant';
 import { toast } from 'sonner';
+import {
+  startLearning as startLearningApi,
+  endLearning as endLearningApi,
+} from '@/shared/axios/api-learn';
 
 interface AssistantPanelProps {
   onClose?: () => void;
@@ -19,21 +23,7 @@ const LearnPanel = ({}: AssistantPanelProps) => {
   const [disabled2, setDisabled2] = useState(false);
   const startLearning = async () => {
     try {
-      const response = await fetch(
-        `http://${process.env.NEXT_PUBLIC_BASE_URL}/learning/start`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('学习开始请求失败');
-      }
-
-      const data = await response.json();
+      const data = await startLearningApi();
       setDisabled2(true);
       emit('change-stream', { url: data.rtmp_url });
       emit('start-play');
@@ -46,21 +36,7 @@ const LearnPanel = ({}: AssistantPanelProps) => {
 
   const endLearning = async () => {
     try {
-      const response = await fetch(
-        `http://${process.env.NEXT_PUBLIC_BASE_URL}/learning/end`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('学习结束请求失败');
-      }
-
-      const data = await response.json();
+      const data = await endLearningApi();
       if (data && data.file_paths) {
         // 使用状态管理库存储数据
         useAssistantStore.getState().setLearningData({
