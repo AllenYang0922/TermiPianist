@@ -105,7 +105,6 @@ export default function PerformArea() {
 
       // 处理消息内容
       const content = message.content as KeyPositionContent;
-      
 
       // 确保content是对象类型
       if (typeof content !== 'object' || !content) return;
@@ -138,7 +137,6 @@ export default function PerformArea() {
             setRightHandPosition(midiId);
           }
         } else if (action === 'note_off') {
-          
           dispatchActiveKeys({
             type: 'NOTE_OFF',
             midiId,
@@ -150,65 +148,6 @@ export default function PerformArea() {
   // 计算钢琴的中间位置
   const totalWhiteKeys = whiteKeys.length;
   const middleKeyIndex = Math.floor(totalWhiteKeys / 2);
-
-  {/*const handleKeyClick = (id: string) => {
-    // 查找对应的键并确定是左侧还是右侧
-    const whiteKey = whiteKeys.find((key) => key.id === id);
-    if (whiteKey) {
-      const keyIndex = whiteKeys.findIndex((key) => key.id === id);
-      const side = keyIndex < middleKeyIndex ? 'left' : 'right';
-
-      // 手动模拟按键
-      dispatchActiveKeys({
-        type: 'NOTE_ON',
-        midiId: whiteKey.midiNumber,
-        keyId: id,
-        hand: side,
-      });
-
-      console.log(
-        `按下白键: ${whiteKey.id}, MIDI编号: ${whiteKey.midiNumber}, 位置: ${side}`
-      );
-    } else {
-      const blackKey = blackKeys.find((key) => key.id === id);
-      if (blackKey) {
-        // 对于黑键，我们需要找到它对应的白键位置
-        const whiteKeyIndex = getBlackKeyPosition(blackKey, whiteKeys);
-        const side = whiteKeyIndex < middleKeyIndex ? 'left' : 'right';
-
-        // 手动模拟按键
-        dispatchActiveKeys({
-          type: 'NOTE_ON',
-          midiId: blackKey.midiNumber,
-          keyId: id,
-          hand: side,
-        });
-
-        console.log(
-          `按下黑键: ${blackKey.id}, MIDI编号: ${blackKey.midiNumber}, 位置: ${side}`
-        );
-      }
-    }
-
-    // 这里可以添加播放音符的逻辑
-    setTimeout(() => {
-      // 释放按键
-      if (whiteKey) {
-        dispatchActiveKeys({
-          type: 'NOTE_OFF',
-          midiId: whiteKey.midiNumber,
-        });
-      } else {
-        const foundBlackKey = blackKeys.find((key) => key.id === id);
-        if (foundBlackKey) {
-          dispatchActiveKeys({
-            type: 'NOTE_OFF',
-            midiId: foundBlackKey.midiNumber,
-          });
-        }
-      }
-    }, 300);
-  };*/}
 
   return (
     <div className="flex flex-col border-1 border-[#41719C] rounded-md p-4">
@@ -222,8 +161,8 @@ export default function PerformArea() {
       })} */}
       <h2 className="text-xl font-bold">演奏区域</h2>
 
-      <div className="relative w-full overflow-x-auto mt-4 pb-4 h-[360px]">
-        <div className="piano-container relative h-[240px] min-w-[1400px]">
+      <div className="relative w-full mt-4 pb-16">
+        <div className="piano-container relative h-[240px] w-full">
           {/* 键盘标记 - 显示分割线 */}
           <div className="absolute top-0 left-0 w-full flex z-10">
             {whiteKeys.map((key, index) => {
@@ -258,15 +197,6 @@ export default function PerformArea() {
 
           {/* 红色边框 - 位于分割线下方 */}
           <div className="absolute top-6 left-0 w-full h-1 bg-red-500 z-10"></div>
-
-          {/* 中间分隔线 - 将钢琴分为左右两半 */}
-          {/* <div
-            className="absolute top-6 bottom-0 w-1 bg-purple-500 z-20"
-            style={{
-              left: `${(100 / whiteKeys.length) * middleKeyIndex}%`,
-              height: 'calc(100% - 6px)',
-            }}
-          ></div> */}
 
           {/* 白键 */}
           <div className="white-keys flex h-full pt-6 relative">
@@ -355,8 +285,8 @@ export default function PerformArea() {
         </div>
         <Image
           src="/left-palm.svg"
-          width={80}
-          height={80}
+          width={70}
+          height={70}
           alt="左手"
           loading="eager"
           className="absolute top-[200px] transition-all duration-300"
@@ -366,8 +296,8 @@ export default function PerformArea() {
         />
         <Image
           src="/right-palm.svg"
-          width={80}
-          height={80}
+          width={70}
+          height={70}
           alt="右手"
           loading="eager"
           className="absolute top-[200px] transition-all duration-300"
@@ -376,29 +306,6 @@ export default function PerformArea() {
           }}
         />
       </div>
-
-      {/*<div className="flex justify-center items-center gap-64 mt-4">
-        /~ 左手 ~/
-        <div className="flex flex-col items-center">
-          <Image
-            src="/left-palm.svg"
-            width={80}
-            height={80}
-            alt="左手"
-            loading="eager"
-          />
-        </div>
-        /~ 右手 ~/
-        <div className="flex flex-col items-center">
-          <Image
-            src="/right-palm.svg"
-            width={80}
-            height={80}
-            alt="右手"
-            loading="eager"
-          />
-        </div>
-      </div>*/}
     </div>
   );
 }
