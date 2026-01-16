@@ -3,14 +3,14 @@
 import { useRef, useEffect, useState, useMemo } from 'react';
 import { useAssistantStore } from '@/stores/assistant';
 import { v4 as uuidv4 } from 'uuid';
-import { Mic } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Mic, CircleStop } from 'lucide-react';
 import React from 'react';
 import MessageComponent from './message';
 import useStream from '@/hooks/use-stream';
 import type { Message } from '@/stores/assistant/type';
 import { Steps } from 'antd';
-import { LoadingOutlined } from '@ant-design/icons';
+import { LoadingOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { stopPerform } from '@/shared/axios/api-learn';
 
 interface AssistantPanelProps {
   onClose?: () => void;
@@ -244,7 +244,6 @@ const PerformPanel = ({}: AssistantPanelProps) => {
   useEffect(() => {
     if (!currentSessionId) {
       const sessionId = uuidv4();
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCurrentSessionId(sessionId);
     }
   }, [currentSessionId]);
@@ -336,42 +335,67 @@ const PerformPanel = ({}: AssistantPanelProps) => {
     // 直接调用handleSend，不传递参数
     handleSend();
   };
+
+  // 处理停止演奏
+  const handleStopPerform = async () => {
+    try {
+      await stopPerform();
+    } finally {
+      // 停止演奏时不清空 messageList（store 中的 messages）
+      // setIsLoading(false);
+      // setIsVoiceEnded(true);
+      // setIsStreamEnded(true);
+      // // 仅重置本地 UI 状态（不影响消息内容）
+      // setCollapsedStates({});
+      // setSecondLineVisible({});
+    }
+  };
   return (
     <div className="flex h-full flex-col w-full text-black">
       {/* 头部 */}
       <div className="flex flex-col items-center justify-center pb-4 space-y-2 border-b border-dashed border-gray-500">
         <h3 className="text-md font-semibold">Powered by Termitech</h3>
         <div className="text-sm text-gray-700">演奏模式</div>
-        {/* 语音输入按钮 */}
-        {/* 语音波浪动画按钮 */}
-        {!isVoiceEnded ? (
-          <button className="w-8 h-8 flex items-center justify-center rounded-full transition-colors mt-2 cursor-pointer bg-[#3C89E8] hover:bg-[#3C89E8]/90 text-white">
-            <div className="relative">
-              {/* 语音波浪动画 */}
-              <div className="flex items-center justify-center gap-0.5">
-                <div className="w-0.5 h-3 bg-white animate-sound-wave-1"></div>
-                <div className="w-0.5 h-4 bg-white animate-sound-wave-2"></div>
-                <div className="w-0.5 h-5 bg-white animate-sound-wave-3"></div>
-                <div className="w-0.5 h-4 bg-white animate-sound-wave-2"></div>
-                <div className="w-0.5 h-3 bg-white animate-sound-wave-1"></div>
+        <div className="flex items-center gap-3">
+          {/* 语音输入按钮 */}
+          {/* 语音波浪动画按钮 */}
+          {!isVoiceEnded ? (
+            <button className="w-8 h-8 flex items-center justify-center rounded-full transition-colors cursor-pointer bg-[#3C89E8] hover:bg-[#3C89E8]/90 text-white">
+              <div className="relative">
+                {/* 语音波浪动画 */}
+                <div className="flex items-center justify-center gap-0.5">
+                  <div className="w-0.5 h-3 bg-white animate-sound-wave-1"></div>
+                  <div className="w-0.5 h-4 bg-white animate-sound-wave-2"></div>
+                  <div className="w-0.5 h-5 bg-white animate-sound-wave-3"></div>
+                  <div className="w-0.5 h-4 bg-white animate-sound-wave-2"></div>
+                  <div className="w-0.5 h-3 bg-white animate-sound-wave-1"></div>
+                </div>
               </div>
-            </div>
-          </button>
-        ) : (
-          <button
-            onClick={handleMicClick}
-            disabled={isMicDisabled}
-            className={cn(
-              'w-8 h-8 flex items-center justify-center rounded-full transition-colors mt-2',
-              isMicDisabled
-                ? 'cursor-not-allowed bg-gray-400 text-gray-200'
-                : 'cursor-pointer bg-[#3C89E8] hover:bg-[#3C89E8]/90 text-white'
-            )}
-            aria-label="语音输入"
-          >
-            <Mic size={18} />
-          </button>
-        )}
+            </button>
+          ) : (
+            <>
+              {!isMicDisabled && (
+                <button
+                  onClick={handleMicClick}
+                  className="w-8 h-8 flex items-center justify-center rounded-full transition-colors cursor-pointer bg-[#3C89E8] hover:bg-[#3C89E8]/90 text-white"
+                  aria-label="语音输入"
+                >
+                  <Mic size={18} />
+                </button>
+              )}
+              {isMicDisabled && (
+                <button
+                  onClick={handleStopPerform}
+                  className="w-8 h-8 flex items-center justify-center rounded-full transition-colors cursor-pointer bg-red-500 hover:bg-red-500/90 text-white"
+                  aria-label="停止演奏"
+                >
+                  <CircleStop size={18} />
+                </button>
+              )}
+            </>
+          )}
+          {/* <CircleStop className="cursor-pointer" onClick={handleStopPerform} /> */}
+        </div>
       </div>
 
       {/* 消息列表 */}
@@ -474,116 +498,174 @@ const PerformPanel = ({}: AssistantPanelProps) => {
                         direction="vertical"
                         size="small"
                         className="custom-small-steps"
-                        items={[
-                          {
-                            title: '搜索歌曲',
-                            description: '',
-                            status: getStepStatus(
-                              planningGroupMsg,
-                              '搜索歌曲',
-                              chatMessages
-                            ),
-                            icon:
-                              getStepStatus(
+                        items={(() => {
+                          // 当前 planning 组所属会话中是否出现过 error
+                          const currentSessionIdForGroup =
+                            planningGroupMsg.planningMessages[0]?.sessionId;
+                          const hasErrorInSession = chatMessages.some(
+                            (msg) =>
+                              msg.sessionId === currentSessionIdForGroup &&
+                              msg.type === 'error'
+                          );
+
+                          const items = [
+                            {
+                              title: '搜索歌曲',
+                              description: '',
+                              status: getStepStatus(
                                 planningGroupMsg,
                                 '搜索歌曲',
                                 chatMessages
-                              ) === 'process' ? (
-                                <LoadingOutlined style={{ fontSize: '16px' }} />
-                              ) : null,
-                          },
-                          {
-                            title: '分析歌曲',
-                            description: '',
-                            status: getStepStatus(
-                              planningGroupMsg,
-                              '分析歌曲',
-                              chatMessages
-                            ),
-                            icon:
-                              getStepStatus(
+                              ),
+                              icon:
+                                getStepStatus(
+                                  planningGroupMsg,
+                                  '搜索歌曲',
+                                  chatMessages
+                                ) === 'process' ? (
+                                  <LoadingOutlined
+                                    style={{ fontSize: '16px' }}
+                                  />
+                                ) : null,
+                            },
+                            {
+                              title: '分析歌曲',
+                              description: '',
+                              status: getStepStatus(
                                 planningGroupMsg,
                                 '分析歌曲',
                                 chatMessages
-                              ) === 'process' ? (
-                                <LoadingOutlined style={{ fontSize: '16px' }} />
-                              ) : null,
-                          },
-                          {
-                            title: '解析硬件参数',
-                            description:
-                              getStepStatus(
-                                planningGroupMsg,
-                                '解析硬件参数',
-                                chatMessages
-                              ) === 'process' ||
-                              getStepStatus(
-                                planningGroupMsg,
-                                '解析硬件参数',
-                                chatMessages
-                              ) === 'finish' ? (
-                                <div>
-                                  <div>
-                                    左右臂：6自由度机械臂UR3E、左右手：21自由度腱绳灵巧手TermiHand。
-                                  </div>
-                                  {secondLineVisible[planningGroupMsg.id] && (
-                                    <div>
-                                      经分析，机械臂存在移动时延0.2s以上，灵巧手小拇指可拓展按键一个。
-                                    </div>
-                                  )}
-                                </div>
-                              ) : (
-                                ''
                               ),
-                            status: getStepStatus(
-                              planningGroupMsg,
-                              '解析硬件参数',
-                              chatMessages
-                            ),
-                            icon:
-                              getStepStatus(
+                              icon:
+                                getStepStatus(
+                                  planningGroupMsg,
+                                  '分析歌曲',
+                                  chatMessages
+                                ) === 'process' ? (
+                                  <LoadingOutlined
+                                    style={{ fontSize: '16px' }}
+                                  />
+                                ) : null,
+                            },
+                            {
+                              title: '解析硬件参数',
+                              description:
+                                getStepStatus(
+                                  planningGroupMsg,
+                                  '解析硬件参数',
+                                  chatMessages
+                                ) === 'process' ||
+                                getStepStatus(
+                                  planningGroupMsg,
+                                  '解析硬件参数',
+                                  chatMessages
+                                ) === 'finish' ? (
+                                  <div>
+                                    <div>
+                                      左右臂：6自由度机械臂UR3E、左右手：21自由度腱绳灵巧手TermiHand。
+                                    </div>
+                                    {secondLineVisible[planningGroupMsg.id] && (
+                                      <div>
+                                        经分析，机械臂存在移动时延0.2s以上，灵巧手小拇指可拓展按键一个。
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  ''
+                                ),
+                              status: getStepStatus(
                                 planningGroupMsg,
                                 '解析硬件参数',
                                 chatMessages
-                              ) === 'process' ? (
-                                <LoadingOutlined style={{ fontSize: '16px' }} />
-                              ) : null,
-                          },
-                          {
-                            title: '大模型基于硬件参数生成指法',
-                            description: '',
-                            status: getStepStatus(
-                              planningGroupMsg,
-                              '大模型基于硬件参数生成指法',
-                              chatMessages
-                            ),
-                            icon:
-                              getStepStatus(
+                              ),
+                              icon:
+                                getStepStatus(
+                                  planningGroupMsg,
+                                  '解析硬件参数',
+                                  chatMessages
+                                ) === 'process' ? (
+                                  <LoadingOutlined
+                                    style={{ fontSize: '16px' }}
+                                  />
+                                ) : null,
+                            },
+                            {
+                              title: '大模型基于硬件参数生成指法',
+                              description: '',
+                              status: getStepStatus(
                                 planningGroupMsg,
                                 '大模型基于硬件参数生成指法',
                                 chatMessages
-                              ) === 'process' ? (
-                                <LoadingOutlined style={{ fontSize: '16px' }} />
-                              ) : null,
-                          },
-                          {
-                            title: '开始演奏',
-                            description: '',
-                            status: getStepStatus(
-                              planningGroupMsg,
-                              '开始演奏',
-                              chatMessages
-                            ),
-                            icon:
-                              getStepStatus(
+                              ),
+                              icon:
+                                getStepStatus(
+                                  planningGroupMsg,
+                                  '大模型基于硬件参数生成指法',
+                                  chatMessages
+                                ) === 'process' ? (
+                                  <LoadingOutlined
+                                    style={{ fontSize: '16px' }}
+                                  />
+                                ) : null,
+                            },
+                            {
+                              title: '开始演奏',
+                              description: '',
+                              status: getStepStatus(
                                 planningGroupMsg,
                                 '开始演奏',
                                 chatMessages
-                              ) === 'process' ? (
-                                <LoadingOutlined style={{ fontSize: '16px' }} />
-                              ) : null,
-                          },
-                        ]}
+                              ),
+                              icon:
+                                getStepStatus(
+                                  planningGroupMsg,
+                                  '开始演奏',
+                                  chatMessages
+                                ) === 'process' ? (
+                                  <LoadingOutlined
+                                    style={{ fontSize: '16px' }}
+                                  />
+                                ) : null,
+                            },
+                          ];
+
+                          // 没有 error：保持原来的 5 步
+                          if (!hasErrorInSession) return items;
+
+                          // 有 error：只展示已经开始的步骤（第一步始终展示），并把当前步骤标记为错误
+                          let visibleItems = items.filter((item, index) =>
+                            index === 0 ? true : item.status !== 'wait'
+                          );
+
+                          // 找到最后一个处于进行中/已开始的步骤，替换为 error 图标
+                          let lastActiveIndex = -1;
+                          visibleItems.forEach((item, index) => {
+                            if (
+                              item.status === 'process' ||
+                              item.status === 'finish'
+                            ) {
+                              lastActiveIndex = index;
+                            }
+                          });
+
+                          if (lastActiveIndex >= 0) {
+                            visibleItems = visibleItems.map((item, index) =>
+                              index === lastActiveIndex
+                                ? {
+                                    ...item,
+                                    status: 'error',
+                                    icon: (
+                                      <CloseCircleOutlined
+                                        style={{ fontSize: '16px' }}
+                                      />
+                                    ),
+                                  }
+                                : item
+                            );
+                          }
+
+                          return visibleItems;
+                        })()}
                       />
                     </div>
                   </div>
@@ -612,19 +694,19 @@ const PerformPanel = ({}: AssistantPanelProps) => {
         {/* {isLoading &&
           hasReceivedData &&
           chatMessages[chatMessages.length - 1]?.type !== 'planning' && ( */}
-          {hasReceivedData && (
-            <div className="flex justify-start">
-              <div className="flex items-center text-sm text-gray-600">
-                <span className="flex items-center">
-                  <span className="typing-dots ml-1">
-                    <span className="dot"></span>
-                    <span className="dot"></span>
-                    <span className="dot"></span>
-                  </span>
+        {hasReceivedData && (
+          <div className="flex justify-start">
+            <div className="flex items-center text-sm text-gray-600">
+              <span className="flex items-center">
+                <span className="typing-dots ml-1">
+                  <span className="dot"></span>
+                  <span className="dot"></span>
+                  <span className="dot"></span>
                 </span>
-              </div>
+              </span>
             </div>
-          )}
+          </div>
+        )}
       </div>
     </div>
   );

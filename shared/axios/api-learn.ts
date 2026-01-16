@@ -19,3 +19,10 @@ export function endLearning() {
   const url = '/api/learning/end';
   return request.post(url).then((res) => res.data);
 }
+
+// 停止演奏
+export async function stopPerform() {
+  const url = '/api/performance/stop';
+  const res = await request.post(url);
+  return res.data;
+}

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useReducer, useRef, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import Image from 'next/image';
 import { generatePianoKeys, getBlackKeyPosition } from './piano';
 import { useAssistantStore } from '@/stores/assistant';
@@ -36,8 +36,8 @@ function activeKeysReducer(
 }
 
 export default function PerformArea() {
-  // 从piano.tsx导入钢琴键盘数据
-  const { whiteKeys, blackKeys } = generatePianoKeys();
+  // 从piano.tsx导入钢琴键盘数据，使用 useMemo 确保引用稳定，避免导致 useEffect 死循环
+  const { whiteKeys, blackKeys } = useMemo(() => generatePianoKeys(), []);
 
   // 辅助函数：根据 midiNumber 计算手掌位置的百分比
   const calculateHandPosition = (midiNumber: number): number => {
@@ -71,8 +71,6 @@ export default function PerformArea() {
   // 追踪左右手的当前位置（midiNumber）
   const [leftHandPosition, setLeftHandPosition] = useState<number>(60); // 默认位置
   const [rightHandPosition, setRightHandPosition] = useState<number>(69); // 默认位置
-
-  useEffect(() => {}, [keyPositionMessages]);
 
   // 使用ref跟踪已处理的消息ID集合，避免重复处理
   const processedMessageIdsRef = useRef<Set<string>>(new Set());
