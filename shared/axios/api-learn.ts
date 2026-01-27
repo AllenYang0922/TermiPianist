@@ -8,7 +8,7 @@ export function getHistoryList() {
   return request.get(url).then((res) => res.data);
 }
 
-// 结束演奏
+// 开始演奏
 export function startLearning() {
   const url = '/api/learning/start';
   return request.post(url).then((res) => res.data);
@@ -24,5 +24,12 @@ export function endLearning() {
 export async function stopPerform() {
   const url = '/api/performance/stop';
   const res = await request.post(url);
+  return res.data;
+}
+
+// 调整演奏速度
+export async function adjustPerformanceSpeed(speed: number) {
+  const url = '/api/performance/speed';
+  const res = await request.post(url, { bpm:speed });
   return res.data;
 }

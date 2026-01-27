@@ -4,6 +4,7 @@ import PerformPanel from './assistant/perform-panel';
 import HistoryPanel from './history/panel';
 import LearnPanel from './assistant/learn-panel';
 import { usePathname } from 'next/navigation';
+import { App } from 'antd';
 
 const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
   
@@ -33,5 +34,9 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
 };
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
-  return <AppLayoutContent>{children}</AppLayoutContent>;
+  return (
+    <App>
+      <AppLayoutContent>{children}</AppLayoutContent>
+    </App>
+  );
 }
