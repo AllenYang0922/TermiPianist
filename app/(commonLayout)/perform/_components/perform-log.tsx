@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Input, App } from 'antd';
+import { App, Select } from 'antd';
 import { useAssistantStore } from '@/stores/assistant';
 import { useSmartScroll } from '@/hooks/useSmartScroll';
 import { adjustPerformanceSpeed } from '@/shared/axios/api-learn';
@@ -49,11 +49,18 @@ export default function PerformLog() {
 
       <div className="flex items-center gap-2">
         <div>调速:</div>
-        <Input
+        <Select
           value={speedValue}
-          onChange={(e) => setSpeedValue(e.target.value)}
-          placeholder="请输入速度值"
+          onChange={(value) => setSpeedValue(value)}
           style={{ width: '200px' }}
+          options={[
+            { value: '60', label: '60' },
+            { value: '75', label: '75' },
+            { value: '85', label: '85' },
+            { value: '90', label: '90' },
+            { value: '105', label: '105' },
+            { value: '120', label: '120' },
+          ]}
         />
         <button
           onClick={handleApply}
