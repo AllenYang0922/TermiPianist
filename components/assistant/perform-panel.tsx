@@ -562,7 +562,7 @@ const PerformPanel = ({}: AssistantPanelProps) => {
                                 ) === 'finish' ? (
                                   <div>
                                     <div>
-                                      右臂：6自由度机械臂UR3、右手：21自由度腱绳灵巧手TermiHand。
+                                      左右臂：6自由度机械臂UR3E、左右手：21自由度腱绳灵巧手TermiHand。
                                     </div>
                                     {secondLineVisible[planningGroupMsg.id] && (
                                       <div>
