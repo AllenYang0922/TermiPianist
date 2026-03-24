@@ -47,7 +47,7 @@ export default function PerformLog() {
     <div className="h-[50vh] flex flex-col gap-3 border-1 border-[#41719C] rounded-md p-4">
       <div className="font-medium text-lg">演奏日志 ：</div>
 
-      <div className="flex items-center gap-2">
+      {/* <div className="flex items-center gap-2">
         <div>调速:</div>
         <Select
           value={speedValue}
@@ -69,7 +69,7 @@ export default function PerformLog() {
         >
           应用
         </button>
-      </div>
+      </div> */}
 
       {playingLogs.length === 0 ? (
         <p className="text-gray-400">暂无演奏日志</p>

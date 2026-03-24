@@ -24,8 +24,8 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
         <div className="p-4 h-full">{children}</div>
       </main>
       {/* 助手面板 */}
-      <aside className="w-[20%] bg-white border-l-1 border-[#bae6fd] overflow-y-auto">
-        <div className="py-4 px-3 h-full">
+      <aside className="w-[20%] bg-white border-l-1 border-[#bae6fd] overflow-hidden">
+        <div className="pt-4 h-full min-h-0 flex flex-col">
           {isLearn ? <LearnPanel/> : <PerformPanel/>}
         </div>
       </aside>

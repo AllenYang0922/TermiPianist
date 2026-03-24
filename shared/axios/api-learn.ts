@@ -33,3 +33,10 @@ export async function adjustPerformanceSpeed(speed: number) {
   const res = await request.post(url, { bpm:speed });
   return res.data;
 }
+
+// 获取歌曲清单
+export async function getSongList() {
+  const url = '/api/available_songs';
+  const res = await request.get(url);
+  return res.data;
+}

@@ -10,6 +10,12 @@ import type { Message } from '@/stores/assistant/type';
  * @returns 发送消息的函数和处理状态
  */
 export const useStream = (currentSessionId: string | null) => {
+  type StreamRequestParams =
+    | string[]
+    | {
+        file_paths?: string[];
+        song_name?: string;
+      };
   const [isProcessing, setIsProcessing] = useState(false);
   const [isStreamEnded, setIsStreamEnded] = useState(false);
   const [hasReceivedData, setHasReceivedData] = useState(false);
@@ -30,16 +36,17 @@ export const useStream = (currentSessionId: string | null) => {
    * 单独拆出来是为了在出错重试时也能复用同一套逻辑
    */
   const startStreamRequest = useCallback(
-    (filePaths?: string[]) => {
-      if (!currentSessionId) {
+    (params?: StreamRequestParams, sessionIdOverride?: string) => {
+      const activeSessionId = sessionIdOverride ?? currentSessionId;
+      if (!activeSessionId) {
         setIsProcessing(false);
         return;
       }
 
       // 准备请求体
-      const requestBody = filePaths
-        ? { file_paths: filePaths, mode: 'learning' }
-        : {};
+      const requestBody = Array.isArray(params)
+        ? { file_paths: params, mode: 'learning' }
+        : params || {};
 
       // 发送请求并处理SSE流
       // fetch(`/api/chat`, {
@@ -103,14 +110,11 @@ export const useStream = (currentSessionId: string | null) => {
 
                         // 将接收到的数据添加到消息列表
                         // 对于某些特殊类型（如 voice_end），即使没有 content 也需要处理
-                        if (
-                          (jsonData.content || jsonData.type === 'voice_end') &&
-                          currentSessionId
-                        ) {
+                        if (jsonData.content || jsonData.type === 'voice_end') {
                           const aiMessage: Message = {
                             type: jsonData.type,
                             id: jsonData.id,
-                            sessionId: currentSessionId, // 使用前端的 currentSessionId
+                            sessionId: activeSessionId, // 使用当前请求绑定的会话 ID
                             content: jsonData.content,
                             timestamp: jsonData.timestamp,
                             status: jsonData.status,
@@ -185,11 +189,11 @@ export const useStream = (currentSessionId: string | null) => {
                       // 设置已收到数据标志
                       setHasReceivedData(true);
 
-                      if (jsonData.content && currentSessionId) {
+                      if (jsonData.content) {
                         const aiMessage: Message = {
                           type: 'assistant',
                           id: Math.random().toString(36).slice(2),
-                          sessionId: currentSessionId,
+                          sessionId: activeSessionId,
                           content: jsonData.content,
                           timestamp: new Date().toISOString(),
                           status: 1,
@@ -229,14 +233,15 @@ export const useStream = (currentSessionId: string | null) => {
    * 真正的请求逻辑在 startStreamRequest 中
    */
   const sendStreamRequest = useCallback(
-    (filePaths?: string[]) => {
-      if (!currentSessionId || isProcessing) return;
+    (params?: StreamRequestParams, sessionIdOverride?: string) => {
+      const activeSessionId = sessionIdOverride ?? currentSessionId;
+      if (!activeSessionId || isProcessing) return;
 
       setIsProcessing(true);
       setHasReceivedData(false); // 重置数据接收状态
       setHasRetried(false); // 新的一次请求，允许一次重试
 
-      startStreamRequest(filePaths);
+      startStreamRequest(params, activeSessionId);
     },
     [currentSessionId, isProcessing, startStreamRequest]
   );
