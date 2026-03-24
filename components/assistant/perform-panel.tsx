@@ -709,11 +709,11 @@ const PerformPanel = ({}: AssistantPanelProps) => {
                                   ) === 'finish' ? (
                                     <div>
                                       <div>
-                                        左右臂：6自由度机械臂UR3E、左右手：21自由度腱绳灵巧手TermiHand。
+                                        左右臂：7自由度络石机械臂AR5、左右手：18自由度腱绳灵巧手TermiHand。
                                       </div>
                                       {secondLineVisible[planningGroupMsg.id] && (
                                         <div>
-                                          经分析，机械臂存在移动时延0.2s以上，灵巧手小拇指可拓展按键一个。
+                                          经分析，机械臂存在移动时延0.3s以上，灵巧手小拇指可拓展按键一个。
                                         </div>
                                       )}
                                     </div>
