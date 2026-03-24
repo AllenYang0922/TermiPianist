@@ -504,7 +504,7 @@ const PerformPanel = ({}: AssistantPanelProps) => {
             <>
               {!isMicDisabled && (
                 <button
-                  onClick={handleMicClick}
+                  onClick={() => handleMicClick()}
                   className="w-8 h-8 flex items-center justify-center rounded-full transition-colors cursor-pointer bg-[#3C89E8] hover:bg-[#3C89E8]/90 text-white"
                   aria-label="语音输入"
                 >
